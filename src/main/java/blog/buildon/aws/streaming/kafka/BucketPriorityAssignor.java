@@ -1,4 +1,4 @@
-package content.buildon.aws.streaming.kafka;
+package blog.buildon.aws.streaming.kafka;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;

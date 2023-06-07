@@ -7,7 +7,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>content.buildon.aws.streaming.kafka</groupId>
+    <groupId>blog.buildon.aws.streaming.kafka</groupId>
     <artifactId>bucket-priority-pattern</artifactId>
     <description>Pattern that groups topic partitions into buckets so these buckets can be processed in a given priority order.</description>
     <version>1.0.0</version>

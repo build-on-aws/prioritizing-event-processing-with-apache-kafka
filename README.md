@@ -89,7 +89,7 @@ Discarding any message that can't be sent to any of the buckets is also possible
 
 ```bash
 configs.setProperty(BucketPriorityConfig.FALLBACK_PARTITIONER_CONFIG,
-   "content.buildon.aws.streaming.kafka.DiscardPartitioner");
+   "blog.buildon.aws.streaming.kafka.DiscardPartitioner");
 ```
 
 ## Using the assignor

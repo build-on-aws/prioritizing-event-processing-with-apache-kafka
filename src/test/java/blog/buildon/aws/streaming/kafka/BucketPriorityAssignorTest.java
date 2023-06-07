@@ -1,4 +1,4 @@
-package content.buildon.aws.streaming.kafka;
+package blog.buildon.aws.streaming.kafka;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;

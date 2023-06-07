@@ -1,4 +1,4 @@
-package content.buildon.aws.streaming.kafka;
+package blog.buildon.aws.streaming.kafka;
 
 import java.util.List;
 import java.util.Map;
