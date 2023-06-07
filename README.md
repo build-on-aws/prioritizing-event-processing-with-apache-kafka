@@ -83,21 +83,7 @@ The default delimiter is `-` but you can change to something else:
 configs.setProperty(BucketPriorityConfig.DELIMITER_CONFIG, "|");
 ```
 
-### Fallback partitioner
-
-There are some situations where the partitioner will need to know what to do when there is not enough data available in the message to decide which bucket to use. For instance:
-
-* When the topic specified in the message doesn't need message prioritization.
-* When a key is not present in the message or it's not using the right format.
-* When the data about which bucket to use don't exist or can't be found.
-
-For these situations an fallback partitioner will be used.
-Here is an example of configuring the fallback partitioner to round-robin:
-
-```bash
-configs.setProperty(BucketPriorityConfig.FALLBACK_PARTITIONER_CONFIG,
-   "org.apache.kafka.clients.producer.RoundRobinPartitioner");
-```
+### Discarding messages
 
 Discarding any message that can't be sent to any of the buckets is also possible:
 
@@ -105,8 +91,6 @@ Discarding any message that can't be sent to any of the buckets is also possible
 configs.setProperty(BucketPriorityConfig.FALLBACK_PARTITIONER_CONFIG,
    "com.riferrei.kafka.core.DiscardPartitioner");
 ```
-
-If you don't configure a fallback partitioner explicitly, Kafka's default partitioner will be used.
 
 ## Using the assignor
 

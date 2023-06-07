@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RoundRobinPartitioner;
 import org.apache.kafka.common.Cluster;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.PartitionInfo;
@@ -86,21 +85,6 @@ public class BucketPriorityPartitionerTest {
     }
 
     @Test
-    public void checkIfFallbackPartitionerIsValid() {
-        final Map<String, String> configs = new HashMap<>();
-        try (BucketPriorityPartitioner partitioner = new BucketPriorityPartitioner()) {
-            assertThrows(InvalidConfigurationException.class, () -> {
-                configs.put(BucketPriorityConfig.TOPIC_CONFIG, "test");
-                configs.put(BucketPriorityConfig.BUCKETS_CONFIG, "B1, B2");
-                configs.put(BucketPriorityConfig.ALLOCATION_CONFIG, "70%, 30%");
-                configs.put(BucketPriorityConfig.FALLBACK_PARTITIONER_CONFIG,
-                    BucketPriorityPartitionerTest.class.getName());
-                partitioner.configure(configs);
-            });
-        }
-    }
-
-    @Test
     public void checkIfMinNumberPartitionsIsRespected() {
         final String topic = "test";
         final Map<String, String> configs = new HashMap<>();
@@ -120,130 +104,6 @@ public class BucketPriorityPartitionerTest {
                 producer.send(new ProducerRecord<String, String>(topic, "B1-001", "value"));
             });
         }
-    }
-
-    @Test
-    public void checkIfRoundRobinFallbackActionIsTriggered() {
-
-        final String topic = "test";
-        final Map<String, String> configs = new HashMap<>();
-        configs.put(BucketPriorityConfig.TOPIC_CONFIG, topic);
-        configs.put(BucketPriorityConfig.BUCKETS_CONFIG, "B1, B2");
-        configs.put(BucketPriorityConfig.ALLOCATION_CONFIG, "70%, 30%");
-        configs.put(BucketPriorityConfig.FALLBACK_PARTITIONER_CONFIG,
-            RoundRobinPartitioner.class.getName());
-        BucketPriorityPartitioner partitioner = new BucketPriorityPartitioner();
-        partitioner.configure(configs);
-
-        // Create two partitions so the round robin algorithm can leverage
-        PartitionInfo partition0 = new PartitionInfo(topic, 0, null, null, null);
-        PartitionInfo partition1 = new PartitionInfo(topic, 1, null, null, null);
-        List<PartitionInfo> partitions = List.of(partition0, partition1);
-        Cluster cluster = createCluster(partitions);
-
-        try (MockProducer<String, String> producer = new MockProducer<>(cluster,
-            true, partitioner, new StringSerializer(), new StringSerializer())) {
-
-            ProducerRecord<String, String> record = null;
-            List<Integer> chosenPartitions = new ArrayList<>();
-
-            // Produce a record with a wrong topic to force fallback...
-            record = new ProducerRecord<String, String>("customers", "B1", "value");
-            producer.send(record, (metadata, exception) -> {
-                if (metadata.topic().equals(topic)) {
-                    // This is not supposed to happen anyway...
-                    chosenPartitions.add(metadata.partition());
-                }
-            });
-
-            // Produce a record without a key to force fallback...
-            record = new ProducerRecord<String, String>(topic, null, "value");
-            producer.send(record, (metadata, exception) -> {
-                chosenPartitions.add(metadata.partition());
-            });
-
-            // Using a key without a valid bucket to force fallback...
-            record = new ProducerRecord<String, String>(topic, "Wrong", "value");
-            producer.send(record, (metadata, exception) -> {
-                chosenPartitions.add(metadata.partition());
-            });
-
-            // Now produce three records with valid topic and key...
-            record = new ProducerRecord<String, String>(topic, "B1-001", "value");
-            producer.send(record, (metadata, exception) -> {
-                chosenPartitions.add(metadata.partition());
-            });
-            record = new ProducerRecord<String, String>(topic, "B1-002", "value");
-            producer.send(record, (metadata, exception) -> {
-                chosenPartitions.add(metadata.partition());
-            });
-            record = new ProducerRecord<String, String>(topic, "B2-001", "value");
-            producer.send(record, (metadata, exception) -> {
-                chosenPartitions.add(metadata.partition());
-            });
-
-            // The expected output is:
-            // - First two records are spread over the 2 partitions
-            // - Two records need to be sent to partition 0 (B1)
-            // - One record need to be sent to partition 1 (B2)
-            assertEquals(List.of(0, 1, 0, 0, 1), chosenPartitions);
-
-        }
-
-    }
-
-    @Test
-    public void checkIfDiscardFallbackActionIsTriggered() {
-
-        final String topic = "test";
-        final Map<String, String> configs = new HashMap<>();
-        configs.put(BucketPriorityConfig.TOPIC_CONFIG, topic);
-        configs.put(BucketPriorityConfig.BUCKETS_CONFIG, "B1, B2");
-        configs.put(BucketPriorityConfig.ALLOCATION_CONFIG, "70%, 30%");
-        configs.put(BucketPriorityConfig.FALLBACK_PARTITIONER_CONFIG,
-            DiscardPartitioner.class.getName());
-        BucketPriorityPartitioner partitioner = new BucketPriorityPartitioner();
-        partitioner.configure(configs);
-
-        // Create two partitions to make things a little bit more interesting
-        PartitionInfo partition0 = new PartitionInfo(topic, 0, null, null, null);
-        PartitionInfo partition1 = new PartitionInfo(topic, 1, null, null, null);
-        List<PartitionInfo> partitions = List.of(partition0, partition1);
-        Cluster cluster = createCluster(partitions);
-
-        try (MockProducer<String, String> producer = new MockProducer<>(cluster,
-            true, partitioner, new StringSerializer(), new StringSerializer())) {
-
-            int counter = 0;
-            ProducerRecord<String, String> record = null;
-            List<Integer> chosenPartitions = new ArrayList<>();
-
-            // Produce 10 different records where 5 of them will
-            // be sent using the key "B1" and thus need to end up
-            // in the partition 0. The other 5 records will be sent
-            // without a key and thus... will be discarded.
-            for (int i = 0; i < 10; i++) {
-                if (++counter > 5) {
-                    record = new ProducerRecord<String, String>(topic, "B1", "value");
-                } else {
-                    record = new ProducerRecord<String, String>(topic, null, "value");
-                }
-                producer.send(record, (metadata, exception) -> {
-                    // Ignoring partition -1 because this means
-                    // not leveraging any available partition.
-                    if (metadata.partition() != -1) {
-                        chosenPartitions.add(metadata.partition());
-                    }
-                });
-            }
-
-            // The expected output is:
-            // - The first 5 records need to be discarded
-            // - The last 5 records need to end up on partition 0 (B1)
-            assertEquals(List.of(0, 0, 0, 0, 0), chosenPartitions);
-
-        }
-
     }
 
     @Test

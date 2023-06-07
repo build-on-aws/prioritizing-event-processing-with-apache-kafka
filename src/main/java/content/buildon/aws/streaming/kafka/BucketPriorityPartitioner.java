@@ -12,12 +12,12 @@ import org.apache.kafka.common.Cluster;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.clients.producer.Partitioner;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.errors.InvalidConfigurationException;
 import org.apache.kafka.common.utils.Utils;
 
 public class BucketPriorityPartitioner implements Partitioner {
 
-    private Partitioner fallback;
     private BucketPriorityConfig config;
     private ThreadLocal<String> lastBucket;
     private Map<String, Bucket> buckets;
@@ -40,14 +40,6 @@ public class BucketPriorityPartitioner implements Partitioner {
             throw new InvalidConfigurationException("The bucket allocation " +
                 "is incorrect. The sum of all buckets needs to be 100.");
         }
-        try {
-            fallback = config.getConfiguredInstance(
-                BucketPriorityConfig.FALLBACK_PARTITIONER_CONFIG,
-                Partitioner.class);
-        } catch (Exception ex) {
-            throw new InvalidConfigurationException("The fallback " +
-                "partitioner configured is invalid.", ex);
-        }
         lastBucket = new ThreadLocal<>();
         buckets = new LinkedHashMap<>();
         for (int i = 0; i < config.buckets().size(); i++) {
@@ -69,7 +61,10 @@ public class BucketPriorityPartitioner implements Partitioner {
     @Override
     public int partition(String topic, Object key, byte[] keyBytes,
         Object value, byte[] valueBytes, Cluster cluster) {
-        int partition = -1;
+        int partition = RecordMetadata.UNKNOWN_PARTITION;
+        // Try to apply the bucket priority partitioning logic. If
+        // none of the conditions apply, allow the partition to be
+        // set by the built-in partitioning logic from KIP-794.
         if (config.topic() != null && config.topic().equals(topic)) {
             if (key instanceof String) {
                 String keyValue = (String) key;
@@ -79,18 +74,9 @@ public class BucketPriorityPartitioner implements Partitioner {
                     if (buckets.containsKey(bucketName)) {
                         lastBucket.set(bucketName);
                         partition = getPartition(bucketName, cluster);
-                    } else {
-                        partition = fallback.partition(topic,
-                            key, keyBytes, value, valueBytes, cluster);
                     }
                 }
-            } else {
-                partition = fallback.partition(topic,
-                    key, keyBytes, value, valueBytes, cluster);
             }
-        } else {
-            partition = fallback.partition(topic,
-                key, keyBytes, value, valueBytes, cluster);
         }
         return partition;
     }
