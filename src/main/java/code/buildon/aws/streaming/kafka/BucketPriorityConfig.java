@@ -33,10 +33,6 @@ public class BucketPriorityConfig extends AbstractConfig {
         return getString(DELIMITER_CONFIG);
     }
 
-    public String fallbackPartitioner() {
-        return getString(FALLBACK_PARTITIONER_CONFIG);
-    }
-
     public String fallbackAssignor() {
         return getString(FALLBACK_ASSIGNOR_CONFIG);
     }
@@ -55,9 +51,6 @@ public class BucketPriorityConfig extends AbstractConfig {
     public static final String DELIMITER_CONFIG_DEFAULT = "-";
     public static final String ALLOCATION_CONFIG = "bucket.priority.allocation";
     public static final String ALLOCATION_CONFIG_DOC = "Allocation in percentage for each bucket.";
-    public static final String FALLBACK_PARTITIONER_CONFIG = "bucket.priority.fallback.partitioner";
-    public static final String FALLBACK_PARTITIONER_CONFIG_DOC = "Which partitioner to use as fallback strategy.";
-    public static final String FALLBACK_PARTITIONER_CONFIG_DEFAULT = DiscardPartitioner.class.getName();
     public static final String FALLBACK_ASSIGNOR_CONFIG = "bucket.priority.fallback.assignor";
     public static final String FALLBACK_ASSIGNOR_CONFIG_DOC = "Which assignor to use as fallback strategy.";
     public static final String FALLBACK_ASSIGNOR_CONFIG_DEFAULT = RangeAssignor.class.getName();
@@ -86,12 +79,6 @@ public class BucketPriorityConfig extends AbstractConfig {
                 DELIMITER_CONFIG_DEFAULT,
                 ConfigDef.Importance.LOW,
                 DELIMITER_CONFIG_DOC)
-            .define(
-                FALLBACK_PARTITIONER_CONFIG,
-                ConfigDef.Type.CLASS,
-                FALLBACK_PARTITIONER_CONFIG_DEFAULT,
-                ConfigDef.Importance.LOW,
-                FALLBACK_PARTITIONER_CONFIG_DOC)
             .define(
                 FALLBACK_ASSIGNOR_CONFIG,
                 ConfigDef.Type.CLASS,
