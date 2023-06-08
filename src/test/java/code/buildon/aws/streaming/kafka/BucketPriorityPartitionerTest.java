@@ -1,4 +1,4 @@
-package blog.buildon.aws.streaming.kafka;
+package code.buildon.aws.streaming.kafka;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

@@ -1,10 +1,8 @@
 # Prioritizing Event Processing with Apache Kafka
 
-Implement message prioritization in [Apache Kafka](https://kafka.apache.org) is often a hard task because Kafka doesn't support broker-level reordering of messages like some messaging technologies do. Though some developers see this as a limitation, the reality is that it isn't because Kafka is not supposed to allow message reordering. Kafka is a distributed [commit log](https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying) and therefore messages are immutable and so their ordering is within partitions. This doesn't change the fact the developers may need to implement message prioritization in Kafka.
+Implement event processing prioritization in [Apache Kafka](https://kafka.apache.org) is often a hard task because Kafka doesn't support broker-level reordering of messages like some messaging technologies do. Though some developers see this as a limitation, the reality is that it isn't because Kafka is not supposed to allow message reordering. Kafka is a distributed [commit log](https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying) and therefore messages are immutable and so their ordering is within partitions. This doesn't change the fact the developers may need to implement event processing prioritization in Kafka.
 
-This project aims to address this problem while still proving a way to keep the implementation code simple. In Kafka, [partitions are a unit-of-parallelism, unit-of-storage, and unit-of-durability](https://www.buildon.aws/posts/in-the-land-of-the-sizing-the-one-partition-kafka-topic-is-king/01-what-are-partitions). However, when developers write code to handle partitions directly they end up writing a rather more complex code, and often need to give up of some facilities that the Kafka architecture provides such as automatic rebalancing of consumers when new partitions are added and/or when a group leader fails. This becomes even more important when developers are interacting with Kafka via frameworks like [Kafka Connect](https://kafka.apache.org/documentation/#connect) and [Kafka Streams](https://kafka.apache.org/documentation/streams/) that, by design, don't expect that partitions are handled directly.
-
-This project addresses message prioritization by grouping partitions into simpler abstractions called buckets that express priority given their size. Bigger buckets mean a higher priority, and smaller buckets mean less priority. The project also addresses code simplicity by providing a way to do all of this with the pluggable architecture of Kafka.
+In Kafka, [partitions are a unit-of-parallelism, unit-of-storage, and unit-of-durability](https://www.buildon.aws/posts/in-the-land-of-the-sizing-the-one-partition-kafka-topic-is-king/01-what-are-partitions). However, when developers write code to handle partitions directly they end up writing a rather more complex code, and often need to give up of some facilities that the Kafka architecture provides such as automatic rebalancing of consumers when new partitions are added and/or when a group leader fails. This becomes even more important when developers are interacting with Kafka via frameworks like [Kafka Connect](https://kafka.apache.org/documentation/#connect) and [Kafka Streams](https://kafka.apache.org/documentation/streams/) that, by design, don't expect that partitions are handled directly. This project addresses event processing prioritization via the bucket pattern. It groups partitions into simpler abstractions called buckets that express priority given their size. Bigger buckets mean a higher priority, and smaller buckets mean less priority. The project also addresses code simplicity by providing a way to do all of this with the pluggable architecture of Kafka.
 
 Let's understand how this works with an example.
 
@@ -16,7 +14,7 @@ To ensure that each message will end up in their respective bucket, use the `Buc
 
 ![Assignor Overview](images/assignor-overview.png)
 
-With the bucket priority, you can implement message prioritization by having more consumers working on buckets with higher priorities, while buckets with less priority can have fewer consumers. Message prioritization can also be obtained by executing these consumers in an order that gives preference to processing high priority buckets before the less priority ones. While coordinating this execution might involve some extra coding from your part (perhaps using some sort of scheduler) you don't have to implement low-level code to manage partition assignment and keep your consumers simple by leveraging the standard `subscribe()` and `poll()` methods.
+With the bucket priority, you can implement event processing prioritization by having more consumers working on buckets with higher priorities, while buckets with less priority can have fewer consumers. Event processing prioritization can also be obtained by executing these consumers in an order that gives preference to processing high priority buckets before the less priority ones. While coordinating this execution may involve some extra coding from you (perhaps using some sort of scheduler) you don't have to implement low-level code to manage partition assignment and keep your consumers simple by leveraging the standard `subscribe()` and `poll()` methods.
 
 ## Building the project
 
@@ -80,7 +78,7 @@ Discarding any message that can't be sent to any of the buckets is also possible
 
 ```bash
 configs.setProperty(BucketPriorityConfig.FALLBACK_PARTITIONER_CONFIG,
-   "blog.buildon.aws.streaming.kafka.DiscardPartitioner");
+   "code.buildon.aws.streaming.kafka.DiscardPartitioner");
 ```
 
 ## Using the assignor
