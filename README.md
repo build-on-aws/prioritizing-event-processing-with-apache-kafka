@@ -44,19 +44,13 @@ configs.setProperty(ProducerConfig.PARTITIONER_CLASS_CONFIG,
 KafkaProducer<K, V> producer = new KafkaProducer<>(configs);
 ```
 
-To work properly you need to specify in the configuration which topic will have its partitions grouped into buckets.
-This is important because in Kafka topics are specified in a message level and not in a producer level.
-This means that the same producer can be used to write messages into different topics, so the partitioner needs to know which topic will have their partitions grouped into buckets.
-
+To work properly, you need to specify in the configuration which topic will have its partitions grouped into buckets. This is important because, in Kafka, topics are specified at a message level and not at a producer level. This means that the same producer can write messages on different topics, so the partitioner needs to know which topic will have their partitions grouped into buckets.
 
 ```bash
 configs.setProperty(BucketPriorityConfig.TOPIC_CONFIG, "orders");
 ```
 
-Finally you have to specify in the configuration which buckets will be configured and what is the partition allocation for each one of them.
-The partition allocation is specified in terms of percentage.
-Note that the usage of the symbol `%` is optional.
-
+Finally, specify in the configuration which buckets will be configured and what is the partition allocation for each one of them. The partition allocation is specified in terms of percentage. Note that the usage of the symbol `%` is optional.
 
 ```bash
 configs.setProperty(BucketPriorityConfig.BUCKETS_CONFIG, "Platinum, Gold");
@@ -68,10 +62,7 @@ In case of the allocation result in some partitions being left behind because th
 
 ### Messages and buckets
 
-In order to specify which bucket should be used your producer need to provide this information on the message key.
-The partitioner will inspect each key in the attempt to understand in which bucket the message should be written.
-For this reason the key must be an instance of a [java.lang.String](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html) and it need to contain the bucket name either as one literal string or as the first part of a string separated by an delimiter.
-For example, to specify that the bucket is `Platinum` then following examples are valid:
+In order to specify which bucket should be used, your producer need to provide this information on the message key. The partitioner will inspect each key in the attempt to understand in which bucket the message should be written. For this reason, the key must be an instance of a [java.lang.String](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html) and it needs to contain the bucket name either as one literal string or as the first part of a string separated by a delimiter. For example, to specify that the bucket is `Platinum` then following examples are valid:
 
 * Key = `"Platinum"`
 * Key = `"Platinum-001"`
@@ -105,19 +96,14 @@ configs.setProperty(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG,
 KafkaConsumer<K, V> consumer = new KafkaConsumer<>(configs);
 ```
 
-To work properly you need to specify in the configuration which topic will have its partitions grouped into buckets.
-This is important because in Kafka consumers can subscribe to multiple topics.
-This means that the same consumer can be used to read messages from different topics, so the assignor needs to know which topic will have their partitions grouped into buckets.
-
+To work properly, you need to specify in the configuration which topic will have its partitions grouped into buckets. This is important because, in Kafka, consumers can subscribe to multiple topics. This means that the same consumer can read messages from different topics, so the assignor needs to know which topic will have their partitions grouped into buckets.
 
 ```bash
 configs.setProperty(BucketPriorityConfig.TOPIC_CONFIG, "orders");
 ```
 
 You also have to specify in the configuration which buckets will be configured and what is the partition allocation for each one of them.
-The partition allocation is specified in terms of percentage.
-Note that the usage of the symbol `%` is optional.
-Ideally the partition allocation configuration needs to be the same used in the producer.
+The partition allocation is specified in terms of percentage. Note that the usage of the symbol `%` is optional. Ideally, the partition allocation configuration needs to be the same used in the producer.
 
 
 ```bash
@@ -136,9 +122,7 @@ configs.setProperty(BucketPriorityConfig.BUCKET_CONFIG, "Platinum");
 
 ### What about the other topics?
 
-As you may know in Kafka a consumer can subscribe to multiple topics, allowing the same consumer to read messages from partitions belonging to different topics.
-Because of this the assignor ensures that only the topic specified in the configuration will have its partitions assigned to the consumers using the bucket priority logic.
-The other topics will have their partitions assigned to consumers using a fallback assignor.
+In Kafka, a consumer can subscribe to multiple topics, allowing the same consumer to read messages from partitions belonging to different topics. Because of this, the assignor ensures that only the topic specified in the configuration will have its partitions assigned to the consumers using the bucket priority logic. The other topics will have their partitions assigned to consumers using a fallback assignor.
 
 Here is an example of configuring the fallback assignor to round-robin:
 
