@@ -1,10 +1,10 @@
 package blog.buildon.aws.streaming.kafka;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -18,7 +18,7 @@ import static blog.buildon.aws.streaming.kafka.utils.KafkaUtils.getConfigs;
 
 public class AllOrdersConsumer {
 
-    private class ConsumerThread extends Thread {
+    private class ConsumerThread implements Runnable {
 
         private String threadName;
         private KafkaConsumer<String, String> consumer;
@@ -55,18 +55,16 @@ public class AllOrdersConsumer {
 
     }
 
-    private final List<ConsumerThread> consumerThreads = new ArrayList<>();
-
     private void run(int numberOfThreads, Properties configs) {
+        ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
         for (int i = 0; i < numberOfThreads; i++) {
             String threadName = String.format("Consumer-Thread-%d", i);
-            consumerThreads.add(new ConsumerThread(threadName, configs));
+            executorService.submit(new ConsumerThread(threadName, configs));
         }
-        consumerThreads.stream().forEach(ct -> ct.start());
     }
 
     public static void main(String[] args) {
-        createTopic(ALL_ORDERS, 6, (short) 3);
+        createTopic(ALL_ORDERS, 6, (short) 1);
         if (args.length >= 1) {
             int numberOfThreads = Integer.parseInt(args[0]);
             new AllOrdersConsumer().run(numberOfThreads, getConfigs());

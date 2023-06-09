@@ -55,7 +55,7 @@ public class AllOrdersProducer {
     }
 
     public static void main(String[] args) {
-        createTopic(ALL_ORDERS, 6, (short) 3);
+        createTopic(ALL_ORDERS, 6, (short) 1);
         new AllOrdersProducer().run(getConfigs());
     }
 

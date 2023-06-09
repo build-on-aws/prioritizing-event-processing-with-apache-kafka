@@ -1,10 +1,10 @@
 package blog.buildon.aws.streaming.kafka;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -21,7 +21,7 @@ import static blog.buildon.aws.streaming.kafka.utils.KafkaUtils.getConfigs;
 
 public class BucketBasedConsumer {
 
-    private class ConsumerThread extends Thread {
+    private class ConsumerThread implements Runnable {
 
         private String threadName;
         private KafkaConsumer<String, String> consumer;
@@ -69,14 +69,12 @@ public class BucketBasedConsumer {
 
     }
 
-    private final List<ConsumerThread> consumerThreads = new ArrayList<>();
-
     private void run(String bucketName, int numberOfThreads, Properties configs) {
+        ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
         for (int i = 0; i < numberOfThreads; i++) {
-            String threadName = String.format("%s-Thread-%d", bucketName, i);
-            consumerThreads.add(new ConsumerThread(bucketName, threadName, configs));
+            String threadName = String.format("Consumer-Thread-%d", i);
+            executorService.submit(new ConsumerThread(bucketName, threadName, configs));
         }
-        consumerThreads.stream().forEach(ct -> ct.start());
     }
 
     public static void main(String[] args) {
