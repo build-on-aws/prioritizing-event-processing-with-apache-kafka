@@ -16,6 +16,8 @@ To ensure that each message will end up in their respective bucket, use the `Buc
 
 With the bucket priority, you can implement event processing prioritization by having more consumers working on buckets with higher priorities, while buckets with less priority can have fewer consumers. Event processing prioritization can also be obtained by executing these consumers in an order that gives preference to processing high priority buckets before the less priority ones. While coordinating this execution may involve some extra coding from you (perhaps using some sort of scheduler) you don't have to implement low-level code to manage partition assignment and keep your consumers simple by leveraging the standard `subscribe()` and `poll()` methods.
 
+You can read more about the bucket priority pattern in this blog post: https://www.buildon.aws/posts/prioritizing-event-processing-with-apache-kafka
+
 ## Building the project
 
 The first thing you need to do to start using this partitioner is building it. In order to do that, you need to install the following dependencies:
